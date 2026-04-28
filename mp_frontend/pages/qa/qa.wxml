@@ -1,0 +1,111 @@
+<view class="container">
+  <!-- 顶部状态栏 -->
+  <view class="status-bar">
+    <view class="status-item {{backendStatus === 'online' ? 'online' : 'offline'}}">
+      <view class="dot"></view>
+      <text>{{backendStatus === 'online' ? '后端已连接' : '后端未连接'}}</text>
+    </view>
+    <view class="clear-btn" bindtap="clearHistory">清空对话</view>
+  </view>
+
+  <!-- 消息展示区 -->
+  <scroll-view class="chat-list" scroll-y scroll-into-view="{{scrollToId}}" scroll-with-animation>
+    <view wx:for="{{messages}}" wx:key="id" id="msg-{{index}}" class="message-item {{item.role}}">
+      <!-- 用户头像/图标 -->
+      <view class="avatar" wx:if="{{item.role === 'assistant'}}">
+        <image src="/assets/ai_avatar.png" mode="aspectFit"></image>
+      </view>
+      
+      <!-- 消息气泡 -->
+      <view class="bubble-container">
+        <view class="bubble">
+          <rich-text nodes="{{item.content}}"></rich-text>
+          
+          <!-- 引用显示 -->
+          <view class="citations" wx:if="{{item.citations && item.citations.length > 0}}">
+            <view class="citation-item" wx:for="{{item.citations}}" wx:for-item="cite" wx:key="index" bindtap="showCitation" data-cite="{{cite}}">
+              [{{index + 1}}] {{cite.source}}, P{{cite.page}}
+            </view>
+          </view>
+        </view>
+        
+        <!-- 时间戳 -->
+        <view class="timestamp">{{item.time}}</view>
+      </view>
+
+      <view class="avatar" wx:if="{{item.role === 'user'}}">
+        <image src="/assets/user_avatar.png" mode="aspectFit"></image>
+      </view>
+    </view>
+    
+    <!-- 加载态 -->
+    <view id="loading" class="message-item assistant" wx:if="{{loading}}">
+      <view class="avatar">
+        <image src="/assets/ai_avatar.png" mode="aspectFit"></image>
+      </view>
+      <view class="bubble-container">
+        <view class="bubble loading-bubble">
+          <view class="dot-flashing"></view>
+        </view>
+      </view>
+    </view>
+    
+    <view id="bottom-anchor" style="height: 20rpx;"></view>
+  </scroll-view>
+
+  <!-- 底部输入区 -->
+  <view class="input-area {{isInputActive ? 'active' : ''}}">
+    <view class="quick-actions" wx:if="{{inputValue}}">
+      <view class="action-btn" bindtap="rewriteQuery">✨ 一键优化为学术式</view>
+    </view>
+    
+    <view class="input-wrapper">
+      <textarea 
+        class="input-box" 
+        value="{{inputValue}}" 
+        placeholder="请输入BMS相关问题..." 
+        auto-height 
+        maxlength="500" 
+        bindinput="onInput"
+        bindfocus="onInputFocus"
+        bindblur="onInputBlur"
+        fixed
+      />
+      <view class="send-btn {{inputValue ? 'active' : ''}}" bindtap="sendMessage">
+        <text>发送</text>
+      </view>
+    </view>
+    
+    <view class="voice-btn" bindtouchstart="startVoice" bindtouchend="endVoice">
+      <image src="/assets/mic.png" mode="aspectFit"></image>
+      <text>按住 语音输入</text>
+    </view>
+  </view>
+
+  <!-- 引用详情弹窗 -->
+  <root-portal>
+    <view class="citation-modal" wx:if="{{showModal}}" bindtap="closeModal">
+      <view class="modal-content" catchtap="stopBubble">
+        <view class="modal-header">
+          <text class="modal-title">文献溯源</text>
+          <view class="close-icon" bindtap="closeModal">×</view>
+        </view>
+        <view class="modal-body">
+          <view class="cite-info">
+            <text class="cite-source">{{activeCite.source}}</text>
+            <text class="cite-page">页码：{{activeCite.page}}</text>
+          </view>
+          <scroll-view scroll-y class="cite-text-scroll">
+            <view class="cite-text">
+              <rich-text nodes="{{activeCite.content}}"></rich-text>
+            </view>
+          </scroll-view>
+        </view>
+        <view class="modal-footer">
+          <view class="footer-btn" bindtap="copyCite">复制内容</view>
+          <view class="footer-btn primary" bindtap="goToLiterature">查看完整文献</view>
+        </view>
+      </view>
+    </view>
+  </root-portal>
+</view>

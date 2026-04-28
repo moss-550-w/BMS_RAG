@@ -1,0 +1,71 @@
+<view class="container">
+  <!-- 搜索栏 -->
+  <view class="search-bar">
+    <icon type="search" size="16" color="#86909C"></icon>
+    <input class="search-input" placeholder="搜索文献标题或关键词" bindinput="onSearch" value="{{searchQuery}}" />
+    <view class="filter-btn" bindtap="toggleSort">
+      <text>{{sortBy === 'date' ? '时间' : '引用'}}</text>
+      <image src="/assets/sort.png" mode="aspectFit"></image>
+    </view>
+  </view>
+
+  <!-- 文献列表 -->
+  <scroll-view class="lib-list" scroll-y refresher-enabled refresher-triggered="{{refreshing}}" bindrefresherrefresh="onRefresh">
+    <view class="lib-card" wx:for="{{filteredList}}" wx:key="id" bindtap="viewDetail" data-item="{{item}}">
+      <view class="lib-icon">
+        <image src="/assets/pdf_icon.png" mode="aspectFit"></image>
+      </view>
+      <view class="lib-info">
+        <view class="lib-title">{{item.title}}</view>
+        <view class="lib-meta">
+          <text class="lib-author">{{item.author || '未知作者'}}</text>
+          <text class="lib-tag">引用: {{item.citeCount || 0}}次</text>
+        </view>
+      </view>
+      <view class="arrow">
+        <image src="/assets/arrow_right.png" mode="aspectFit"></image>
+      </view>
+    </view>
+    
+    <view class="empty-state" wx:if="{{filteredList.length === 0}}">
+      <image src="/assets/empty.png" mode="aspectFit"></image>
+      <text>暂无相关文献</text>
+    </view>
+    
+    <view class="stats-info">
+      已加载 {{libList.length}} 篇BMS专业文献
+    </view>
+  </scroll-view>
+
+  <!-- 详情弹窗 -->
+  <root-portal>
+    <view class="detail-modal" wx:if="{{showDetail}}" bindtap="closeDetail">
+      <view class="modal-content" catchtap="stopBubble">
+        <view class="modal-header">
+          <text class="modal-title">文献详情</text>
+          <view class="close-icon" bindtap="closeDetail">×</view>
+        </view>
+        <view class="modal-body">
+          <view class="paper-title">{{activeItem.title}}</view>
+          <view class="paper-meta">
+            <view class="meta-item"><text class="label">作者：</text><text class="value">{{activeItem.author || '未知'}}</text></view>
+            <view class="meta-item"><text class="label">页数：</text><text class="value">{{activeItem.pages || '未知'}}</text></view>
+            <view class="meta-item"><text class="label">索引状态：</text><text class="value highlight">已持久化</text></view>
+          </view>
+          
+          <view class="section-title">引用片段摘要</view>
+          <view class="fragments">
+            <view class="fragment-item" wx:for="{{[1,2]}}" wx:key="*this">
+              <text class="fragment-text">...电池管理系统(BMS)是电动汽车的核心部件，负责监控电池状态、管理充放电过程以及确保安全性...</text>
+              <view class="fragment-meta">引用于：2026-04-28 10:15</view>
+            </view>
+          </view>
+        </view>
+        <view class="modal-footer">
+          <button class="footer-btn" open-type="share">分享文献</button>
+          <button class="footer-btn primary" bindtap="toggleCollect">{{isCollected ? '取消收藏' : '收藏文献'}}</button>
+        </view>
+      </view>
+    </view>
+  </root-portal>
+</view>

@@ -1,0 +1,38 @@
+const app = getApp();
+
+const request = (url, method, data) => {
+  return new Promise((resolve, reject) => {
+    wx.request({
+      url: `${app.globalData.baseUrl}${url}`,
+      method: method,
+      data: data,
+      header: {
+        'content-type': 'application/json'
+      },
+      success: (res) => {
+        if (res.statusCode === 200) {
+          resolve(res.data);
+        } else {
+          wx.showToast({
+            title: res.data.detail || '请求失败',
+            icon: 'none'
+          });
+          reject(res.data);
+        }
+      },
+      fail: (err) => {
+        wx.showToast({
+          title: '网络连接失败',
+          icon: 'none'
+        });
+        reject(err);
+      }
+    });
+  });
+};
+
+module.exports = {
+  request,
+  get: (url, data) => request(url, 'GET', data),
+  post: (url, data) => request(url, 'POST', data)
+};

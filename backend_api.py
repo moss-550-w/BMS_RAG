@@ -2,6 +2,7 @@ import os
 import time
 from typing import List, Optional
 from fastapi import FastAPI, HTTPException, BackgroundTasks
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from src.data_processor import BMSDataProcessor
 from src.vector_store import BMSVectorStore
@@ -15,6 +16,15 @@ app = FastAPI(
     title="BMS RAG API Server",
     description="电池管理系统 (BMS) 专业领域 RAG 问答系统后端 API",
     version="1.0.0"
+)
+
+# 允许跨域请求 (Streamlit 或其他前端调用)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 # 全局组件初始化 (懒加载)
@@ -46,6 +56,8 @@ class QueryRequest(BaseModel):
 
 class Citation(BaseModel):
     content: str
+    source: str
+    page: int
     metadata: dict
 
 class QueryResponse(BaseModel):
@@ -95,7 +107,12 @@ async def query_rag(request: QueryRequest):
         answer = generator.generate_answer(request.query, relevant_docs)
         
         citations = [
-            Citation(content=doc.page_content, metadata=doc.metadata) 
+            Citation(
+                content=doc.page_content, 
+                source=doc.metadata.get("source", "未知文献"),
+                page=doc.metadata.get("page", 0),
+                metadata=doc.metadata
+            ) 
             for doc in relevant_docs
         ]
             
@@ -131,6 +148,7 @@ def background_rebuild_task():
         rag.is_indexing = False
 
 @app.post("/api/v1/index/rebuild")
+@app.post("/api/v1/reindex")
 async def rebuild_index(background_tasks: BackgroundTasks):
     """触发向量索引重建"""
     if rag.is_indexing:

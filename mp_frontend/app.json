@@ -1,0 +1,43 @@
+{
+  "pages": [
+    "pages/qa/qa",
+    "pages/literature/literature",
+    "pages/mine/mine"
+  ],
+  "window": {
+    "backgroundTextStyle": "light",
+    "navigationBarBackgroundColor": "#165DFF",
+    "navigationBarTitleText": "BMS 智能问答",
+    "navigationBarTextStyle": "white",
+    "backgroundColor": "#F5F7FA"
+  },
+  "tabBar": {
+    "color": "#86909C",
+    "selectedColor": "#165DFF",
+    "backgroundColor": "#ffffff",
+    "borderStyle": "white",
+    "list": [
+      {
+        "pagePath": "pages/qa/qa",
+        "text": "问答",
+        "iconPath": "assets/chat.png",
+        "selectedIconPath": "assets/chat_active.png"
+      },
+      {
+        "pagePath": "pages/literature/literature",
+        "text": "文献库",
+        "iconPath": "assets/book.png",
+        "selectedIconPath": "assets/book_active.png"
+      },
+      {
+        "pagePath": "pages/mine/mine",
+        "text": "我的",
+        "iconPath": "assets/user.png",
+        "selectedIconPath": "assets/user_active.png"
+      }
+    ]
+  },
+  "style": "v2",
+  "sitemapLocation": "sitemap.json",
+  "lazyCodeLoading": "requiredComponents"
+}
