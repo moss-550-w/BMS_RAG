@@ -30,17 +30,31 @@
 3.  **多引擎适配**：增加了环境变量 `EMBEDDING_PROVIDER`，支持在不同云服务商之间无缝切换。
 4.  **BMS 术语清洗**：针对 PDF 解析中的分页、特殊符号进行了清洗，保障算法公式与术语的完整性。
 
-## 六、 运行指南
+## 六、 运行指南 (前后端分离架构)
 1.  **环境配置**：
     在 `.env` 文件中配置 API Key 与接入点 ID。
-2.  **初始化索引**：
+2.  **安装依赖**：
     ```bash
-    python RAG_main.py --rebuild
+    pip install -r requirements.txt
     ```
-3.  **启动问答**：
+3.  **启动后端 API 服务**：
     ```bash
-    python RAG_main.py
+    # Windows PowerShell 指定端口示例
+    $env:BACKEND_PORT=8001; python backend_api.py
     ```
+    *后端服务将运行在 http://localhost:8001*
+4.  **启动前端 Web 界面**：
+    ```bash
+    # 确保前端连接到正确的后端端口
+    $env:BACKEND_PORT=8001; python -m streamlit run app.py
+    ``` ```
+    *前端会自动连接到后端 API 进行问答与管理*
+
+## 七、 架构优势 (Separated Architecture)
+- **解耦性**：前端 UI 与 RAG 核心逻辑分离，支持独立部署与扩展。
+- **并发支持**：后端基于 FastAPI，可支持多个前端客户端或 API 调用。
+- **异步处理**：索引重建等耗时操作在后台异步执行，不阻塞 UI 交互。
+- **标准化接口**：提供标准 RESTful API，便于集成到其他业务系统。
 
 ## 七、 测试结果示例
 **提问**：什么是BMS？
