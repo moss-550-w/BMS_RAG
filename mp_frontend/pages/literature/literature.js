@@ -2,109 +2,70 @@ const api = require('../../utils/request.js');
 
 Page({
   data: {
-    libList: [],
-    filteredList: [],
+    docs: [],
+    loading: false,
     searchQuery: '',
-    sortBy: 'date', // date or cite
-    refreshing: false,
-    showDetail: false,
-    activeItem: null,
-    isCollected: false
+    total: 0
   },
 
   onLoad() {
-    this.loadList();
+    this.fetchDocs();
   },
 
-  onRefresh() {
-    this.setData({ refreshing: true });
-    this.loadList().finally(() => {
-      this.setData({ refreshing: false });
-    });
+  onPullDownRefresh() {
+    this.fetchDocs();
   },
 
-  loadList() {
-    // 模拟从后端获取文献列表
-    // 实际应调用 api.get('/papers')
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        const mockData = [
-          { id: 1, title: 'A Comprehensive Review of Cloud-Based Lithium-Ion Battery Management Systems', author: 'A. Author et al.', pages: 15, citeCount: 12 },
-          { id: 2, title: 'Microcontroller-Driven Battery Management in Hybrid Energy Systems', author: 'B. Zhang', pages: 20, citeCount: 8 },
-          { id: 3, title: '基于物理信息神经网络的锂离子电池荷电状态估计研究综述', author: '王顺利', pages: 12, citeCount: 25 },
-          { id: 4, title: '基于电化学模型的锂离子电池荷电状态估计方法综述', author: '武龙星', pages: 18, citeCount: 19 }
-        ];
+  onSearchInput(e) {
+    this.setData({ searchQuery: e.detail.value });
+  },
+
+  onSearch() {
+    this.fetchDocs();
+  },
+
+  fetchDocs() {
+    this.setData({ loading: true });
+    // 后端接口：/documents?query=xxx
+    api.get('/documents', { query: this.data.searchQuery })
+      .then(res => {
         this.setData({
-          libList: mockData,
-          filteredList: mockData
+          docs: res.documents || [],
+          total: (res.documents || []).length,
+          loading: false
         });
-        resolve();
-      }, 500);
+        wx.stopPullDownRefresh();
+      })
+      .catch(() => {
+        this.setData({ loading: false });
+        wx.stopPullDownRefresh();
+      });
+  },
+
+  viewDoc(e) {
+    const doc = e.currentTarget.dataset.doc;
+    wx.showActionSheet({
+      itemList: ['查看详情', '复制标题', '收藏文献'],
+      success: (res) => {
+        if (res.tapIndex === 0) {
+          wx.showModal({
+            title: doc.name,
+            content: `格式: ${doc.type}\n大小: ${doc.size}\n更新时间: ${doc.mtime}\n\n该功能正在开发中，后续支持PDF预览。`,
+            showCancel: false
+          });
+        } else if (res.tapIndex === 1) {
+          wx.setClipboardData({ data: doc.name });
+        } else if (res.tapIndex === 2) {
+          const collections = wx.getStorageSync('collections') || [];
+          if (!collections.find(c => c.name === doc.name)) {
+            collections.push(doc);
+            wx.setStorageSync('collections', collections);
+            wx.showToast({ title: '已收藏' });
+          } else {
+            wx.showToast({ title: '已在收藏夹', icon: 'none' });
+          }
+        }
+      }
     });
-  },
-
-  onSearch(e) {
-    const query = e.detail.value.toLowerCase();
-    const filtered = this.data.libList.filter(item => 
-      item.title.toLowerCase().includes(query) || 
-      (item.author && item.author.toLowerCase().includes(query))
-    );
-    this.setData({
-      searchQuery: query,
-      filteredList: filtered
-    });
-  },
-
-  toggleSort() {
-    const newSort = this.data.sortBy === 'date' ? 'cite' : 'date';
-    const list = [...this.data.filteredList];
-    if (newSort === 'cite') {
-      list.sort((a, b) => b.citeCount - a.citeCount);
-    } else {
-      list.sort((a, b) => b.id - a.id);
-    }
-    this.setData({
-      sortBy: newSort,
-      filteredList: list
-    });
-  },
-
-  viewDetail(e) {
-    const item = e.currentTarget.dataset.item;
-    this.setData({
-      activeItem: item,
-      showDetail: true,
-      isCollected: wx.getStorageSync('collections')?.includes(item.id) || false
-    });
-  },
-
-  closeDetail() {
-    this.setData({ showDetail: false });
-  },
-
-  stopBubble() {},
-
-  toggleCollect() {
-    const collections = wx.getStorageSync('collections') || [];
-    const id = this.data.activeItem.id;
-    let newCollections;
-    
-    if (this.data.isCollected) {
-      newCollections = collections.filter(cid => cid !== id);
-      wx.showToast({ title: '已取消收藏', icon: 'none' });
-    } else {
-      newCollections = [...collections, id];
-      wx.showToast({ title: '已加入收藏', icon: 'success' });
-    }
-    
-    wx.setStorageSync('collections', newCollections);
-    this.setData({ isCollected: !this.data.isCollected });
-  },
-
-  onShareAppMessage() {
-    return {
-      title: this.data.activeItem ? `推荐文献：${this.data.activeItem.title}` : 'BMS 智能问答文献库',
-      path: '/pages/literature/literature'
-    };
   }
 });

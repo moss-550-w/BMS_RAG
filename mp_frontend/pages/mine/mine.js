@@ -1,4 +1,3 @@
-const app = getApp();
 const api = require('../../utils/request.js');
 
 Page({
@@ -14,6 +13,7 @@ Page({
   onShow() {
     this.updateStats();
     // 同步全局配置
+    const app = getApp();
     const { settings } = app.globalData;
     this.setData({
       providerIndex: settings.provider === 'ark' ? 0 : 1,
@@ -35,6 +35,7 @@ Page({
     const index = e.detail.value;
     const provider = index == 0 ? 'ark' : 'dashscope';
     this.setData({ providerIndex: index });
+    const app = getApp();
     app.globalData.settings.provider = provider;
     wx.showToast({ title: '引擎已切换', icon: 'success' });
   },
@@ -42,12 +43,14 @@ Page({
   onTopKChange(e) {
     const val = e.detail.value;
     this.setData({ topK: val });
+    const app = getApp();
     app.globalData.settings.topK = val;
   },
 
   onRerankChange(e) {
     const val = e.detail.value;
     this.setData({ rerank: val });
+    const app = getApp();
     app.globalData.settings.rerank = val;
   },
 

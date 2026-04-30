@@ -1,102 +1,78 @@
 <view class="container">
-  <!-- 用户信息 -->
-  <view class="user-header">
+  <!-- 个人信息卡片 -->
+  <view class="user-card">
+    <image class="user-avatar" src="../../assets/user_avatar.png" mode="aspectFill"/>
     <view class="user-info">
-      <view class="user-avatar">
-        <image src="/assets/user_avatar.png" mode="aspectFill"></image>
-      </view>
-      <view class="user-text">
-        <view class="username">BMS 研究员</view>
-        <view class="user-tag">专业版用户</view>
-      </view>
-    </view>
-    <view class="header-stats">
-      <view class="stat-item">
-        <text class="num">{{historyCount}}</text>
-        <text class="label">对话历史</text>
-      </view>
-      <view class="stat-divider"></view>
-      <view class="stat-item">
-        <text class="num">{{collectCount}}</text>
-        <text class="label">我的收藏</text>
-      </view>
+      <text class="user-name">BMS 工程师</text>
+      <text class="user-tag">技术专家</text>
     </view>
   </view>
 
-  <!-- 功能列表 -->
-  <scroll-view class="menu-list" scroll-y>
-    <view class="menu-group">
-      <view class="group-title">系统配置</view>
-      <view class="menu-item">
-        <view class="item-left">
-          <text>向量引擎</text>
-        </view>
-        <view class="item-right">
-          <picker bindchange="onProviderChange" value="{{providerIndex}}" range="{{providers}}">
-            <view class="picker-value">{{providers[providerIndex]}}</view>
-          </picker>
-          <image class="arrow" src="/assets/arrow_right.png"></image>
-        </view>
-      </view>
-      <view class="menu-item no-border">
-        <view class="item-left">
-          <text>检索数量 (Top-K)</text>
-        </view>
-        <view class="item-right">
-          <slider class="topk-slider" min="1" max="10" value="{{topK}}" show-value bindchange="onTopKChange" activeColor="#165DFF" />
-        </view>
-      </view>
-      <view class="menu-item">
-        <view class="item-left">
-          <text>重排序 (Rerank)</text>
-        </view>
-        <view class="item-right">
-          <switch checked="{{rerank}}" color="#165DFF" bindchange="onRerankChange" />
-        </view>
-      </view>
+  <!-- 数据统计 -->
+  <view class="stats-row">
+    <view class="stats-item" bindtap="viewHistory">
+      <text class="num">{{historyCount}}</text>
+      <text class="label">历史问答</text>
     </view>
+    <view class="stats-item" bindtap="viewCollections">
+      <text class="num">{{collectCount}}</text>
+      <text class="label">收藏文献</text>
+    </view>
+  </view>
 
-    <view class="menu-group">
-      <view class="group-title">数据管理</view>
-      <view class="menu-item" bindtap="viewHistory">
-        <view class="item-left">
-          <text>对话历史</text>
-        </view>
-        <view class="item-right">
-          <image class="arrow" src="/assets/arrow_right.png"></image>
-        </view>
-      </view>
-      <view class="menu-item" bindtap="viewCollections">
-        <view class="item-left">
-          <text>我的收藏</text>
-        </view>
-        <view class="item-right">
-          <image class="arrow" src="/assets/arrow_right.png"></image>
-        </view>
-      </view>
-    </view>
-
-    <view class="menu-group">
-      <view class="group-title">关于</view>
-      <view class="menu-item">
-        <view class="item-left">
-          <text>系统版本</text>
-        </view>
-        <view class="item-right">
-          <text class="value">V1.0.0</text>
-        </view>
-      </view>
-      <view class="menu-item" bindtap="showHelp">
-        <view class="item-left">
-          <text>使用帮助</text>
-        </view>
-        <view class="item-right">
-          <image class="arrow" src="/assets/arrow_right.png"></image>
-        </view>
-      </view>
-    </view>
+  <!-- 设置列表 -->
+  <view class="settings-group">
+    <view class="group-title">系统配置</view>
     
-    <view class="logout-btn" bindtap="rebuildIndex">重建向量索引</view>
-    <view class="version-info">最后更新: 2026-04-28</view>
-  </scroll-view>
+    <view class="setting-item">
+      <view class="label-wrap">
+        <text class="label">向量引擎 (Embedding)</text>
+        <text class="sub-label">切换不同的模型服务商</text>
+      </view>
+      <picker bindchange="onProviderChange" value="{{providerIndex}}" range="{{providers}}">
+        <view class="picker-val">
+          {{providers[providerIndex]}}
+          <image class="arrow" src="../../assets/arrow_right.png"/>
+        </view>
+      </picker>
+    </view>
+
+    <view class="setting-item">
+      <view class="label-wrap">
+        <text class="label">检索条数 (Top-K)</text>
+        <text class="sub-label">每轮检索召回的文档分块数</text>
+      </view>
+      <slider 
+        class="slider" 
+        min="1" 
+        max="10" 
+        value="{{topK}}" 
+        show-value 
+        activeColor="#165DFF" 
+        bindchange="onTopKChange"
+      />
+    </view>
+
+    <view class="setting-item">
+      <view class="label-wrap">
+        <text class="label">二次重排序 (Rerank)</text>
+        <text class="sub-label">提升检索结果的相关度</text>
+      </view>
+      <switch checked="{{rerank}}" color="#165DFF" bindchange="onRerankChange"/>
+    </view>
+  </view>
+
+  <view class="settings-group">
+    <view class="group-title">系统维护</view>
+    <view class="menu-item" bindtap="rebuildIndex">
+      <text class="label">重建向量索引</text>
+      <image class="arrow" src="../../assets/arrow_right.png"/>
+    </view>
+    <view class="menu-item" bindtap="showHelp">
+      <text class="label">使用帮助</text>
+      <image class="arrow" src="../../assets/arrow_right.png"/>
+    </view>
+  </view>
+
+  <view class="version">Version 1.0.0 (Beta)</view>
 </view>

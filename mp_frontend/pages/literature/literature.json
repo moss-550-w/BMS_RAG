@@ -1,5 +1,5 @@
 {
-  "navigationBarTitleText": "文献库",
+  "navigationBarTitleText": "技术文献库",
   "enablePullDownRefresh": true,
-  "usingComponents": {}
+  "backgroundTextStyle": "dark"
 }

@@ -4,10 +4,12 @@ from typing import List, Optional
 from fastapi import FastAPI, HTTPException, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
+import datetime
 from src.data_processor import BMSDataProcessor
 from src.vector_store import BMSVectorStore
 from src.retriever import BMSRetriever
 from src.generator import BMSGenerator
+
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -18,7 +20,7 @@ app = FastAPI(
     version="1.0.0"
 )
 
-# 允许跨域请求 (Streamlit 或其他前端调用)
+# 添加 CORS 中间件
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -56,8 +58,6 @@ class QueryRequest(BaseModel):
 
 class Citation(BaseModel):
     content: str
-    source: str
-    page: int
     metadata: dict
 
 class QueryResponse(BaseModel):
@@ -107,12 +107,7 @@ async def query_rag(request: QueryRequest):
         answer = generator.generate_answer(request.query, relevant_docs)
         
         citations = [
-            Citation(
-                content=doc.page_content, 
-                source=doc.metadata.get("source", "未知文献"),
-                page=doc.metadata.get("page", 0),
-                metadata=doc.metadata
-            ) 
+            Citation(content=doc.page_content, metadata=doc.metadata) 
             for doc in relevant_docs
         ]
             
@@ -148,7 +143,6 @@ def background_rebuild_task():
         rag.is_indexing = False
 
 @app.post("/api/v1/index/rebuild")
-@app.post("/api/v1/reindex")
 async def rebuild_index(background_tasks: BackgroundTasks):
     """触发向量索引重建"""
     if rag.is_indexing:
@@ -157,8 +151,47 @@ async def rebuild_index(background_tasks: BackgroundTasks):
     background_tasks.add_task(background_rebuild_task)
     return {"message": "索引重建任务已启动"}
 
+@app.get("/api/v1/documents")
+async def list_documents(query: Optional[str] = None):
+    """获取文献列表"""
+    papers_dir = rag.processor.papers_dir
+    docs = []
+    
+    for filename in os.listdir(papers_dir):
+        if not filename.endswith('.pdf'):
+            continue
+            
+        if query and query.lower() not in filename.lower():
+            continue
+            
+        file_path = os.path.join(papers_dir, filename)
+        stats = os.stat(file_path)
+        
+        # 格式化大小
+        size_bytes = stats.st_size
+        if size_bytes < 1024:
+            size_str = f"{size_bytes}B"
+        elif size_bytes < 1024 * 1024:
+            size_str = f"{size_bytes/1024:.1f}KB"
+        else:
+            size_str = f"{size_bytes/(1024*1024):.1f}MB"
+            
+        docs.append({
+            "name": filename,
+            "type": "PDF",
+            "size": size_str,
+            "mtime": datetime.datetime.fromtimestamp(stats.st_mtime).strftime('%Y-%m-%d %H:%M')
+        })
+        
+    return {"documents": docs}
+
+@app.post("/api/v1/reindex")
+async def reindex(background_tasks: BackgroundTasks):
+    """触发向量索引重建 (别名)"""
+    return await rebuild_index(background_tasks)
+
 if __name__ == "__main__":
     import uvicorn
     # 支持从环境变量获取端口，默认 8000
-    port = int(os.getenv("BACKEND_PORT", 8000))
+    port = int(os.getenv("BACKEND_PORT", 8001))
     uvicorn.run(app, host="0.0.0.0", port=port)

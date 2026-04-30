@@ -1,5 +1,4 @@
 const api = require('../../utils/request.js');
-const app = getApp();
 
 Page({
   data: {
@@ -98,6 +97,7 @@ Page({
     });
 
     // 调用后端 API
+    const app = getApp();
     api.post('/query', {
       query: query,
       top_k: app.globalData.settings.topK,
