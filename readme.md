@@ -49,6 +49,7 @@
     $env:BACKEND_PORT=8001; python -m streamlit run app.py
     ``` ```
     *前端会自动连接到后端 API 进行问答与管理*
+    *前端服务将运行在 http://localhost:8501*
 
 ## 七、 架构优势 (Separated Architecture)
 - **解耦性**：前端 UI 与 RAG 核心逻辑分离，支持独立部署与扩展。

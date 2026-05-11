@@ -17,10 +17,11 @@ App({
     systemInfo: null,
     // 后端 API 地址，建议根据实际环境修改
     // 注意：小程序正式上线需使用 HTTPS 且在后台配置域名
-    baseUrl: 'http://127.0.0.1:8001/api/v1', 
+    // baseUrl: 'http://127.0.0.1:8001/api/v1', 
+    baseUrl: 'http://10.90.178.212:8001/api/v1',
     settings: {
       topK: 5,
-      provider: 'ark',
+      provider: 'dashscope',
       rerank: true
     }
   }

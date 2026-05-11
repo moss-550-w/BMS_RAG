@@ -90,13 +90,6 @@ async def query_rag(request: QueryRequest):
         if rag.vectorstore is None:
             raise HTTPException(status_code=400, detail="向量索引未加载，请先重建索引。")
 
-    # 动态切换引擎逻辑 (简单实现)
-    if request.embedding_provider:
-        os.environ["EMBEDDING_PROVIDER"] = request.embedding_provider
-        # 注意：这里会影响全局状态，演示环境下暂且如此
-        rag.vector_store_manager = BMSVectorStore("faiss_index")
-        rag.reload_index()
-
     try:
         retriever = BMSRetriever(rag.vectorstore)
         generator = rag.get_generator()

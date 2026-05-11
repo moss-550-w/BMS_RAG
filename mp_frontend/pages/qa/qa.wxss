@@ -40,6 +40,28 @@
   color: #165DFF;
 }
 
+.debug-panel {
+  background-color: #fff;
+  padding: 12rpx 30rpx 18rpx;
+  border-bottom: 1rpx solid #E5E6EB;
+}
+
+.debug-line {
+  display: block;
+  font-size: 22rpx;
+  color: #86909C;
+  line-height: 1.5;
+  word-break: break-all;
+}
+
+.debug-ok {
+  color: #00B42A;
+}
+
+.debug-error {
+  color: #F53F3F;
+}
+
 /* 聊天列表 */
 .chat-list {
   flex: 1;

@@ -6,6 +6,9 @@ Page({
     inputValue: '',
     loading: false,
     backendStatus: 'offline',
+    backendUrl: '',
+    backendError: '',
+    lastCheckTime: '',
     scrollToId: '',
     showModal: false,
     activeCite: null,
@@ -13,6 +16,9 @@ Page({
   },
 
   onLoad() {
+    this.setData({
+      backendUrl: api.getBaseUrl()
+    });
     this.checkBackendStatus();
     // 加载历史记录
     const history = wx.getStorageSync('chat_history') || [];
@@ -23,14 +29,37 @@ Page({
     });
   },
 
+  onShow() {
+    this.setData({
+      backendUrl: api.getBaseUrl()
+    });
+    this.checkBackendStatus();
+  },
+
   checkBackendStatus() {
-    api.get('/status')
-      .then(res => {
-        this.setData({ backendStatus: 'online' });
+    api.get('/status', {}, { timeout: 10000 })
+      .then(() => {
+        this.setData({
+          backendStatus: 'online',
+          backendError: '',
+          lastCheckTime: this.getCurrentTime()
+        });
       })
-      .catch(() => {
-        this.setData({ backendStatus: 'offline' });
+      .catch((err) => {
+        this.setData({
+          backendStatus: 'offline',
+          backendError: err && err.message ? err.message : '状态检查失败',
+          lastCheckTime: this.getCurrentTime()
+        });
       });
+  },
+
+  getCurrentTime() {
+    const now = new Date();
+    const hour = String(now.getHours()).padStart(2, '0');
+    const minute = String(now.getMinutes()).padStart(2, '0');
+    const second = String(now.getSeconds()).padStart(2, '0');
+    return `${hour}:${minute}:${second}`;
   },
 
   onInput(e) {
@@ -68,7 +97,7 @@ Page({
     if (!this.data.inputValue) return;
     
     wx.showLoading({ title: '正在优化...' });
-    api.post('/rewrite', { query: this.data.inputValue })
+    api.post('/rewrite', { query: this.data.inputValue }, { timeout: 30000 })
       .then(res => {
         this.setData({ inputValue: res.rewritten_query });
       })
@@ -101,8 +130,8 @@ Page({
     api.post('/query', {
       query: query,
       top_k: app.globalData.settings.topK,
-      embedding_provider: app.globalData.settings.provider
-    }).then(res => {
+      rerank: app.globalData.settings.rerank
+    }, { timeout: 120000 }).then(res => {
       const assistantMsg = {
         id: Date.now() + 1,
         role: 'assistant',
@@ -119,8 +148,21 @@ Page({
         // 保存到本地
         wx.setStorageSync('chat_history', this.data.messages);
       });
-    }).catch(() => {
-      this.setData({ loading: false });
+    }).catch((err) => {
+      const isTimeout = err && err.errMsg && err.errMsg.includes('timeout');
+      const message = isTimeout
+        ? '回答生成时间较长，请稍后重试'
+        : (err && err.message ? err.message : '回答失败，请检查后端配置');
+      this.setData({
+        loading: false,
+        backendStatus: isTimeout ? 'online' : 'offline',
+        backendError: message,
+        lastCheckTime: this.getCurrentTime()
+      });
+      wx.showToast({
+        title: String(message).slice(0, 20),
+        icon: 'none'
+      });
     });
   },
 

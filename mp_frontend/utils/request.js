@@ -1,16 +1,22 @@
 /**
  * 封装微信小程序网络请求
  */
-const request = (url, method, data = {}) => {
+const getBaseUrl = () => {
+  const app = getApp();
+  return (app && app.globalData && app.globalData.baseUrl) || 'http://10.90.178.212:8001/api/v1';
+};
+
+const request = (url, method, data = {}, options = {}) => {
   return new Promise((resolve, reject) => {
-    // 动态获取 app 实例，避免生命周期顺序问题
-    const app = getApp();
-    const baseUrl = (app && app.globalData && app.globalData.baseUrl) || 'http://127.0.0.1:8001/api/v1';
+    const baseUrl = getBaseUrl();
+    const fullUrl = `${baseUrl}${url}`;
+    const timeout = options.timeout || 15000;
     
     wx.request({
-      url: `${baseUrl}${url}`,
+      url: fullUrl,
       method: method,
       data: data,
+      timeout,
       header: {
         'Content-Type': 'application/json'
       },
@@ -18,27 +24,52 @@ const request = (url, method, data = {}) => {
         if (res.statusCode >= 200 && res.statusCode < 300) {
           resolve(res.data);
         } else {
+          const detail =
+            (res.data && (res.data.detail || res.data.message)) ||
+            `请求失败: ${res.statusCode}`;
           wx.showToast({
-            title: `请求失败: ${res.statusCode}`,
+            title: String(detail).slice(0, 20),
             icon: 'none'
           });
-          reject(res);
+          reject({
+            type: 'http',
+            message: String(detail),
+            statusCode: res.statusCode,
+            url: fullUrl,
+            raw: res
+          });
         }
       },
       fail: (err) => {
+        const errMsg = err && err.errMsg ? err.errMsg : '网络连接异常';
+        let friendly = errMsg;
+
+        if (errMsg.includes('timeout')) {
+          friendly = '请求超时，请检查后端响应';
+        } else if (errMsg.includes('fail')) {
+          friendly = `请求失败: ${errMsg}`;
+        }
+
         wx.showToast({
-          title: '网络连接异常',
+          title: friendly.slice(0, 20),
           icon: 'none'
         });
-        reject(err);
+        reject({
+          type: 'network',
+          message: friendly,
+          errMsg,
+          url: fullUrl,
+          raw: err
+        });
       }
     });
   });
 };
 
 module.exports = {
-  get: (url, data) => request(url, 'GET', data),
-  post: (url, data) => request(url, 'POST', data),
-  put: (url, data) => request(url, 'PUT', data),
-  delete: (url, data) => request(url, 'DELETE', data)
+  getBaseUrl,
+  get: (url, data, options) => request(url, 'GET', data, options),
+  post: (url, data, options) => request(url, 'POST', data, options),
+  put: (url, data, options) => request(url, 'PUT', data, options),
+  delete: (url, data, options) => request(url, 'DELETE', data, options)
 };

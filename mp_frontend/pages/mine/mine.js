@@ -5,7 +5,7 @@ Page({
     historyCount: 0,
     collectCount: 0,
     providers: ['火山引擎 (Ark)', '阿里云 (DashScope)'],
-    providerIndex: 0,
+    providerIndex: 1,
     topK: 5,
     rerank: true
   },
@@ -37,7 +37,7 @@ Page({
     this.setData({ providerIndex: index });
     const app = getApp();
     app.globalData.settings.provider = provider;
-    wx.showToast({ title: '引擎已切换', icon: 'success' });
+    wx.showToast({ title: '已保存，重建索引后生效', icon: 'none' });
   },
 
   onTopKChange(e) {
